@@ -1,0 +1,17 @@
+[build-system]
+    requires = ["setuptools"]
+
+[tool.setuptools.dynamic]
+    version = {attr = "PyFlashToGPS.__version__"}
+
+[project.urls]
+    Repository = "https://github.com/bob-anderson-ok/PyFlashToGPS"
+
+[project]
+    name = "PyFlashToGPS"
+    keywords = ["flash", "flash-tag", "IOTAflash", "SharpCap"]
+    dynamic = ["version"]
+    license = {text = "MIT License"}
+    description = "Processes flash-tagged SharpCap FITS recordings to insert GPS accurate timestamps"
+    authors = [ {name = "Robert L Anderson, Jr", email = "bob.anderson.ok@gmail.com"} ]
+    readme = "README.rst"
