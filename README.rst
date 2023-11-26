@@ -4,9 +4,8 @@ PyFlashToGPS
 PyFlashToGPS is a command line utility to analyze a flash-tagged FITS video and add GPS accurate
 timestamps to the DATE-OBS meta-data for each frame.
 
-usage: PyFlashToGPS [-h] [--verbose] [--QHY174GPS] [--fits FITS_path]
-                    flash_times
-
+usage: PyFlashToGPS [-h] [--verbose] [--QHY174GPS] [--fits FITS_path] flash_times
+                
 A utility to add GPS accurate timestamps to flash-tagged FITS videos.
 
 positional arguments:
