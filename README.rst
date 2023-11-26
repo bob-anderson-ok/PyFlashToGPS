@@ -1,6 +1,7 @@
-# PyFlashToGPS
+PyFlashToGPS
+============
 
-PyFlashToGPS is a command line utility to analyze a flash-tagged FITS videos from SharpCap and add GPS accurate
+PyFlashToGPS is a command line utility to analyze a flash-tagged FITS video and add GPS accurate
 timestamps to the DATE-OBS meta-data for each frame.
 
 usage: PyFlashToGPS [-h] [--verbose] [--QHY174GPS] [--fits FITS_path]
