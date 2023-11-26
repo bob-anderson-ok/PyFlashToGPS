@@ -9,8 +9,7 @@ usage: PyFlashToGPS [-h] [--verbose] [--QHY174GPS] [--fits FITS_path] flash_time
 A utility to add GPS accurate timestamps to flash-tagged FITS videos.
 
 positional arguments:
-  flash_times       UTC times for first and last flash. Example: "2023-09-02
-                    13:45:10 2023-09-02 13:47:05" (the quotes are needed!)
+  flash_times       UTC times for first and last flash. Example: "2023-09-02 13:45:10 2023-09-02 13:47:05" (the quotes are needed!)
 
 options:
   -h, --help        show this help message and exit
