@@ -19,7 +19,7 @@ from edge_finding_utilities import find_best_r_only_from_min_max_size, subFrameA
 verbose = False
 progress_factor = 50
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 def parse_flash_times(flash_times_str):
     format_ok = False
@@ -248,7 +248,7 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
 
     ans, interpolated_r = findFlashEdgeInterpolatedPosition(first_flash)
     if not ans == 'ok':
-        print(f"findFlashEdgeTimeCorrection() returned: {ans}")
+        if verbose: print(f"\nfindFlashEdgeTimeCorrection() returned: {ans}")
         exit()
 
     if verbose: print(f"Found that the first flash edge started at frame {interpolated_r:0.4f}")
@@ -305,6 +305,8 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
     if verbose: print(f"time_corrrection last_flash: {time_correction_last:0.2f} microseconds")
 
     tf2 = t2 - datetime.timedelta(microseconds=round(time_correction_last))
+    if verbose: print(tf2)
+
 
     # Because datetime objects have 1 microsecond resolution (not enough to reliably extrapolate over 1000 to 10000 points),
     # we calculate our own delta with more than 1 microsecond resolution
@@ -369,10 +371,12 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
               f'    mean(delta): {np.mean(t_diff):0.6f}  max(delta): {np.max(t_diff):0.6f}  min(delta): {np.min(t_diff):0.6f}')
 
 def findFlashEdgeInterpolatedPosition(flash_to_analyze):
-    min_event = len(flash_to_analyze) // 4
-    max_event = 3 * min_event
+    min_event = 3
+    max_event = len(flash_to_analyze) - 3
+
     left = 0
     right = len(flash_to_analyze) - 1
+
     y = np.array(flash_to_analyze).astype('float64')
 
     # Use PyOTE routines to find edge position
@@ -419,7 +423,7 @@ def timestamper():
 
     arg_parser.add_argument("--fits", type=str, nargs=1,
                         metavar="FITS_path", default=None,
-                        help="Full path to FITS folder")
+                        help="Full path to FITS folder - enclose in quotes if there are spaces in the path!")
 
     # arg_parser.add_argument("--exposure", type=str, nargs=1,
     #                         metavar="exposure", default=None,

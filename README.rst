@@ -18,6 +18,6 @@ options:
   --verbose         Verbose output (used during development)
   --QHY174GPS       If file came from a QHY174GPS camera, a comparison report
                     is made between the GPS timestamps
-  --fits FITS_path  Full path to FITS folder
+  --fits FITS_path  Full path to FITS folder - enclose in quotes if spaces are present
 
 
