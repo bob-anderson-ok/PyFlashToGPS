@@ -19,9 +19,9 @@ from edge_finding_utilities import find_best_r_only_from_min_max_size, subFrameA
 verbose = False
 progress_factor = 50
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
-def parse_flash_times(flash_times_str):
+def parseFlashTimes(flash_times_str):
     format_ok = False
     parts = flash_times_str.split(' ')
     if len(parts) == 4:
@@ -39,11 +39,11 @@ def parse_flash_times(flash_times_str):
     else:
         return True
 
-def process_fits_video(args):
+def processFITSvideo(args):
     global verbose
 
     verbose = args.verbose
-    if verbose: print(f"Entered process_fits_video() with fits path: {args.fits[0]}")
+    # if verbose: print(f"Entered process_fits_video() with fits path: {args.fits[0]}")
 
     # Finally, we need to add to all the FITS files DATE-OBS (timestamp header)
     fitsFiles = glob.glob(f'{args.fits[0]}/*.fits')
@@ -58,26 +58,25 @@ def process_fits_video(args):
 
     print(f"\nNumber of cpu timestamps found: {len(cpuTimestamps)}")
 
-    exposure = None
-
     if len(cpuTimestamps) > 0:
         ans = droppedFrameAnalysis(cpu_timestamps=cpuTimestamps)
         if ans[0] == 'ok':
-            frame_time = ans[1]
-            if verbose: print(f"Frame time: {frame_time:0.5f}")
-            exposure = frame_time * 1000  # Convert to milliseconds
-            if verbose: print(f"exposure derived from cpuTimestamps: {exposure:0.3f} milliseconds")
+            # frame_time = ans[1]
+            # if verbose: print(f"Frame time: {frame_time:0.5f}")
+            # exposure = frame_time * 1000  # Convert to milliseconds
+            # if verbose: print(f"exposure derived from cpuTimestamps: {exposure:0.3f} milliseconds")
+            pass
         else:
             print(ans[1])
             exit(-1)
 
-    flashLightcurve = extract_flash_lightcurve(fitsFiles)
+    flashLightcurve = extractFlashLightcurve(fitsFiles)
 
-    processFlashLightCurve(flashLightcurve, args, exposure, cpuTimestamps, cpuTimestampComment)
+    processFlashLightCurve(flashLightcurve, args, cpuTimestamps, cpuTimestampComment)
 
     plotFlashLightCurve(flashLightcurve, args)
 
-def extract_flash_lightcurve(fits_files):
+def extractFlashLightcurve(fits_files):
     lightcurve = []
 
     for frame_file in fits_files:
@@ -177,8 +176,7 @@ def droppedFrameAnalysis(cpu_timestamps):
     else:
         return 'error', 'No cpu timestamps found'
 
-# def processFlashLightCurve(ts1='2023-11-11 16:29:20+00:00', ts2='2023-11-11 16:29:21+00:00'):
-def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTimestampComment):
+def processFlashLightCurve(flashLightCurve, args, cpuTimestamps, cpuTimestampComment):
     global verbose, progress_factor
 
     flash_time_str = args.flash_times
@@ -192,7 +190,7 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
     ts1 = parts[0] + ' ' + parts[1]
     ts2 = parts[2] + ' ' + parts[3]
 
-    if verbose: print(f"ts1: {ts1}  ts2: {ts2}")
+    if verbose: print(f"\nfirst flash UTC time: {ts1}  last flash UTC time: {ts2}")
 
     fitsFolderPath = args.fits[0]
 
@@ -207,13 +205,13 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
     t1 = parser.parse(ts1)  # Create a datetime object
     t2 = parser.parse(ts2)
 
-    if verbose: print(t1,t2, '\n')
+    # if verbose: print(t1,t2, '\n')
 
     seconds_apart = (t2-t1).total_seconds()
 
-    if verbose: print(f"timestamp difference: {seconds_apart} seconds")
+    if verbose: print(f"\nTime between first and last flashes: {seconds_apart} seconds\n")
 
-    if verbose: print(f"Length of flashLightCurve: {len(flashLightCurve)}")
+    if verbose: print(f"Length of flashLightCurve: {len(flashLightCurve)}\n")
     # if verbose: print(flashLightCurve)
 
     # Initially we extract parameters from the entire set of points. Those values may be 'off' a bit if
@@ -244,21 +242,25 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
             else:
                 break
 
-    if verbose: print(f"\nfirst_flash: {first_flash}")
 
     ans, interpolated_r = findFlashEdgeInterpolatedPosition(first_flash)
     if not ans == 'ok':
-        if verbose: print(f"\nfindFlashEdgeTimeCorrection() returned: {ans}")
+        if verbose:
+            print(f"\nfindFlashEdgeInterolatedPosition() returned: {ans}")
         exit()
 
-    if verbose: print(f"Found that the first flash edge started at frame {interpolated_r:0.4f}")
+    if verbose: print(f"At the first flash ({t1}), the edge started at frame {interpolated_r:0.4f}")
     first_flash_subframe_value = interpolated_r
 
-    time_correction_first = (interpolated_r - int(interpolated_r)) * exposure
-    if verbose: print(f"time_correction first_flash: {time_correction_first:0.2f} microseconds")
+    # if verbose: print(f"\nfirst_flash: {first_flash}")
+    if verbose: reportFlashStats(flashLightCurve, interpolated_r)
 
-    tf1 = t1 - datetime.timedelta(microseconds=round(time_correction_first))
-    if verbose: print(tf1)
+    # time_correction_first = (interpolated_r - int(interpolated_r)) * exposure
+    # if verbose: print(f"time_correction first_flash: {time_correction_first:0.2f} microseconds")
+
+    # tf1 = t1 - datetime.timedelta(microseconds=round(time_correction_first))
+    # tf1 = t1
+    # if verbose: print(tf1)
 
     # Now we need to find the last flash. To do that, we'll work backwards
 
@@ -290,44 +292,49 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
             print('\nData error: Could not find the terminating flash\n')
 
     last_flash = flashLightCurve[last_flash_bottom_start:last_flash_top_end+1]  # noqa
-    if verbose: print(f"last_flash: {last_flash}")
 
     ans, interpolated_r = findFlashEdgeInterpolatedPosition(last_flash)
     if not ans == 'ok':
-        print(f"findFlashEdgeTimeCorrection() returned: {ans}")
+        print(f"findFlashEdgeInterpolatedPosition() returned: {ans}")
         exit()
 
-    if verbose: print(f"Found that the last flash edge started at frame {last_flash_bottom_start + interpolated_r:0.4f}")
+    if verbose: print(f"\nAt the last flash ({t2}), the edge started at frame {last_flash_bottom_start + interpolated_r:0.4f}")
+
+    # if verbose: print(f"Found that the last flash edge started at frame {last_flash_bottom_start + interpolated_r:0.4f}")
     last_flash_subframe_value = interpolated_r + last_flash_bottom_start
+    if verbose: reportFlashStats(flashLightCurve, last_flash_subframe_value)
 
-    time_correction_last = (interpolated_r - int(interpolated_r)) * exposure
+    # time_correction_last = (interpolated_r - int(interpolated_r)) * exposure
 
-    if verbose: print(f"time_corrrection last_flash: {time_correction_last:0.2f} microseconds")
+    # if verbose: print(f"time_corrrection last_flash: {time_correction_last:0.2f} microseconds")
 
-    tf2 = t2 - datetime.timedelta(microseconds=round(time_correction_last))
-    if verbose: print(tf2)
-
+    # tf2 = t2 - datetime.timedelta(microseconds=round(time_correction_last))
+    # tf2 = t2
+    # if verbose: print(tf2)
 
     # Because datetime objects have 1 microsecond resolution (not enough to reliably extrapolate over 1000 to 10000 points),
     # we calculate our own delta with more than 1 microsecond resolution
-    precison_time_difference = (t2 - t1).total_seconds() * 1_000_000 + time_correction_first - time_correction_last
+    precison_time_difference = (t2 - t1).total_seconds() * 1_000_000  # microseconds
     precision_delta = precison_time_difference / (last_flash_subframe_value - first_flash_subframe_value)  # noqa
-    if verbose: print(f"precision_time_difference: {precison_time_difference:0.2f} microseconds")
-    if verbose: print(f"precision_delta: {precision_delta:0.2f} microseconds")
+    if verbose: print(f"\nprecision_delta: {precision_delta:0.2f} microseconds  (frame time)")
 
-    # Now we need to calculate a timestamp list.
+    # Now we calculate the timestamp list.
 
-    # We calculate a well-averaged frame time from the timestamped readings...
-    frameTime = (tf2 - tf1) / (last_flash_subframe_value - first_flash_subframe_value)   # noqa
-    # if verbose: print(type(frameTime), frameTime)
+    # Calculate the time at frame 0 from the frame value at the first flash
+    t0_from_first_flash = t1 - datetime.timedelta(microseconds=first_flash_subframe_value * precision_delta)
+
+    # Calculate the time at frame 0 from the the frame value at the last flash
+    t0_from_last_flash = t2 - datetime.timedelta(microseconds=last_flash_subframe_value * precision_delta)
+
+    # Average the calculated frame 0 times to get a 'best' t0 (time at frame 0)
+    t0 = t0_from_last_flash + (t0_from_first_flash - t0_from_last_flash) / 2
 
     timestamps = []
-    t0 = tf1 - datetime.timedelta(microseconds=first_flash_subframe_value * precision_delta)
+
     for i in range(len(flashLightCurve)):
         tn = t0 + datetime.timedelta(microseconds=i * precision_delta)
         ts_str = tn.strftime('%Y-%m-%dT%H:%M:%S.%f')
         timestamps.append(ts_str)
-        # print(f"{i:03d}: {ts_str}")
 
     # Finally, we need to add to all the FITS files DATE-OBS (timestamp header)
     fitsFiles = glob.glob(f'{fitsFolderPath}/*.fits')
@@ -370,6 +377,12 @@ def processFlashLightCurve(flashLightCurve, args, exposure, cpuTimestamps, cpuTi
               f'... statistics of deltas where delta[i] = flash_tag_time[i] - QHY_time[i] (seconds) ...\n'
               f'    mean(delta): {np.mean(t_diff):0.6f}  max(delta): {np.max(t_diff):0.6f}  min(delta): {np.min(t_diff):0.6f}')
 
+def reportFlashStats(light_curve, frame_value):
+    edge_position = int(frame_value)
+    start_frame = max(0, edge_position - 3)
+    end_frame = min(len(light_curve)--1, edge_position + 3)
+    for i in range(start_frame, end_frame+1):
+        print(f"{i:8d}: {light_curve[i]}")
 def findFlashEdgeInterpolatedPosition(flash_to_analyze):
     min_event = 3
     max_event = len(flash_to_analyze) - 3
@@ -410,6 +423,7 @@ def timestamper():
     arg_parser = argparse.ArgumentParser(description="A utility to add GPS accurate timestamps to flash-tagged FITS videos.",
                                          prog='PyFlashToGPS')
 
+    # When (if) we support ADV2 videos, we will need this group
     # group = ts_parser.add_mutually_exclusive_group()
 
     arg_parser.add_argument("flash_times", help='UTC times for first and last flash. Example: "2023-09-02 13:45:10 2023-09-02 13:47:05"'
@@ -418,41 +432,36 @@ def timestamper():
     arg_parser.add_argument("--verbose", action='store_true',
                            help="Verbose output (used during development)")
 
+    arg_parser.add_argument("--version", action='version',
+                            help="Version", version=f"PyFlashToGPS version: {__version__}")
+
     arg_parser.add_argument("--QHY174GPS", action='store_true',
                             help="If file came from a QHY174GPS camera, a comparison report is made between the GPS timestamps")
 
+    # If we are supporting ADV2, change the following to group.add_argument(
     arg_parser.add_argument("--fits", type=str, nargs=1,
                         metavar="FITS_path", default=None,
                         help="Full path to FITS folder - enclose in quotes if there are spaces in the path!")
 
-    # arg_parser.add_argument("--exposure", type=str, nargs=1,
-    #                         metavar="exposure", default=None,
-    #                         help="exposure time in milliseconds")
-
     # group.add_argument("--adv2", type=str, nargs=1,
     #                     metavar="ADV2_path", default=None,
-    #                     help="Full path to ADV2 file")
+    #                     help="Full path to ADV2 file - enclose in quotes if there are spaces in the path!")
 
     args = arg_parser.parse_args()
     verbose = args.verbose
 
-    # if args.exposure is None:
-    #     print('\nAn exposure time (in milliseconds) must be entered. Use the --exposure option for this.\n')
-    #     return
-
-    if parse_flash_times(args.flash_times):
-        if args.fits is not None and verbose: print(f"FITS folder path given: {args.fits[0]}")
+    if parseFlashTimes(args.flash_times):
+        if args.fits is not None and verbose: print(f"\nFITS folder path given: {args.fits[0]}")
     else:
         return
 
     if args.fits is not None:
         fits_folder_path = Path(args.fits[0])
         if not fits_folder_path.exists():
-            print(f"Cannot find fits folder: {args.fits[0]}")
+            print(f"\nCannot find fits folder: {args.fits[0]}\n")
             exit(-1)
         else:
-            if verbose: print(f"FITS folder path given exists - proceeding to process_fits_video.")
-            process_fits_video(args)
+            processFITSvideo(args)
 
     # if args.adv2 is not None:
     #     adv2_file_path = Path(args.adv2[0])
