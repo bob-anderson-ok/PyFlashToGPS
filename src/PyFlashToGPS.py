@@ -13,6 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 matplotlib.use('TkAgg')
+# matplotlib.use('Agg')
 import sys
 
 from edge_finding_utilities import find_best_r_only_from_min_max_size, subFrameAdjusted
@@ -20,7 +21,7 @@ from edge_finding_utilities import find_best_r_only_from_min_max_size, subFrameA
 verbose = False
 progress_factor = 50
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 def parseFlashTimes(flash_times_str):
     format_ok = False
@@ -89,6 +90,7 @@ def plotFlashLightCurve(flashLightCurve, args):
     plt.plot(flashLightCurve, '.')
     plt.xlabel('reading number')
     plt.ylabel('total frame intensity')
+    plt.ioff()
     plt.show()
 
 def getCpuTimestamps(fits_files):
