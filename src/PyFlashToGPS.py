@@ -19,7 +19,7 @@ from edge_finding_utilities import find_best_r_only_from_min_max_size, subFrameA
 verbose = False
 progress_factor = 50
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 def parseFlashTimes(flash_times_str):
     format_ok = False
@@ -247,7 +247,7 @@ def processFlashLightCurve(flashLightCurve, args, cpuTimestamps, cpuTimestampCom
     if not ans == 'ok':
         if verbose:
             print(f"\nfindFlashEdgeInterolatedPosition() returned: {ans}")
-        exit()
+        exit(-1)
 
     if verbose: print(f"At the first flash ({t1}), the edge started at frame {interpolated_r:0.4f}")
     first_flash_subframe_value = interpolated_r
@@ -296,7 +296,7 @@ def processFlashLightCurve(flashLightCurve, args, cpuTimestamps, cpuTimestampCom
     ans, interpolated_r = findFlashEdgeInterpolatedPosition(last_flash)
     if not ans == 'ok':
         print(f"findFlashEdgeInterpolatedPosition() returned: {ans}")
-        exit()
+        exit(-2)
 
     if verbose: print(f"\nAt the last flash ({t2}), the edge started at frame {last_flash_bottom_start + interpolated_r:0.4f}")
 
@@ -363,7 +363,7 @@ def processFlashLightCurve(flashLightCurve, args, cpuTimestamps, cpuTimestampCom
                 hdr.comments['DATE-SYS'] = cpuTimestampComment
             QHYtimestamps.append(hdr['DATE-OBS'])  # Only used for testing with a flash-tagged QHY recording
             hdr['DATE-OBS'] = timestamps[i]
-            hdr.comments['DATE-OBS'] = 'GPS from PyFlashToGPS ' + __version__
+            hdr.comments['DATE-OBS'] = 'GPS frame start (PyFlashToGPS ' + __version__ + ')'
             i += 1
     print(f'\n...GPS timestamp addition completed.')
 
@@ -459,15 +459,16 @@ def timestamper():
         fits_folder_path = Path(args.fits[0])
         if not fits_folder_path.exists():
             print(f"\nCannot find fits folder: {args.fits[0]}\n")
-            exit(-1)
+            exit(-3)
         else:
             processFITSvideo(args)
+            exit(0)
 
     # if args.adv2 is not None:
     #     adv2_file_path = Path(args.adv2[0])
     #     if not adv2_file_path.exists():
     #         print(f"Cannot find adv2 file: {args.adv2[0]}")
-    #         exit()
+    #         exit(-4)
     #     elif verbose:
     #         print(f"ADV2 file has been found.")
 
